@@ -1,0 +1,25 @@
+# Local development infrastructure only.
+# Production database runs on Render's managed Postgres — this file is never deployed.
+name: kaam25
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kaam25-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kaam25
+      POSTGRES_PASSWORD: kaam25_dev_password
+      POSTGRES_DB: kaam25_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - kaam25_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kaam25"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  kaam25_postgres_data:

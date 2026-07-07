@@ -1,0 +1,7 @@
+{
+  "extends": "@kaam25/config/typescript/base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src"]
+}

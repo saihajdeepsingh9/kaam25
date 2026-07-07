@@ -1,0 +1,19 @@
+{
+  "name": "@kaam25/utils",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@kaam25/config": "workspace:*",
+    "typescript": "^5.7.2"
+  }
+}

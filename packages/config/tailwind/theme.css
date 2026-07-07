@@ -1,0 +1,46 @@
+/**
+ * Shared design tokens for Tailwind CSS v4.
+ *
+ * Usage in a consuming app's global stylesheet:
+ *
+ *   @import "tailwindcss";
+ *   @import "@kaam25/config/tailwind/theme.css";
+ *
+ * These are intentionally minimal placeholder tokens. Real visual identity
+ * (typography pairing, full palette, motion language) is a design decision
+ * for its own feature pass — not something to bake into infrastructure
+ * scaffolding. Swap the values below once that pass happens; nothing that
+ * consumes these tokens needs to change.
+ */
+
+@theme {
+  --color-brand-50: oklch(0.97 0.02 275);
+  --color-brand-100: oklch(0.93 0.04 275);
+  --color-brand-500: oklch(0.55 0.18 275);
+  --color-brand-600: oklch(0.48 0.19 275);
+  --color-brand-700: oklch(0.4 0.18 275);
+
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+}
+
+:root {
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.15 0.01 275);
+  --primary: var(--color-brand-600);
+  --primary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --border: oklch(0.9 0 0);
+}
+
+.dark {
+  --background: oklch(0.16 0.01 275);
+  --foreground: oklch(0.95 0 0);
+  --primary: var(--color-brand-500);
+  --primary-foreground: oklch(0.15 0.01 275);
+  --muted: oklch(0.24 0.01 275);
+  --muted-foreground: oklch(0.65 0 0);
+  --border: oklch(0.28 0.01 275);
+}
