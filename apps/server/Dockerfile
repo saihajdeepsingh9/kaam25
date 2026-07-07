@@ -1,34 +1,29 @@
-# Multi-stage build so the final image ships only compiled JS + prod
-# node_modules — not the TypeScript source, dev tooling, or workspace
-# packages' source files.
+# syntax=docker/dockerfile:1
 
 FROM node:22-alpine AS base
+RUN apk add --no-cache libc6-compat
 RUN corepack enable
+
+# --- Prune: extract a minimal, self-contained subset for just `server` ---
+FROM base AS pruner
 WORKDIR /repo
-
-# --- Dependencies (cached separately from source for faster rebuilds) ---
-FROM base AS deps
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
-COPY packages/config/package.json packages/config/package.json
-COPY packages/types/package.json packages/types/package.json
-COPY packages/shared/package.json packages/shared/package.json
-COPY apps/server/package.json apps/server/package.json
-RUN pnpm install --frozen-lockfile --filter=server...
-
-# --- Build ---
-FROM base AS build
-COPY --from=deps /repo/node_modules ./node_modules
-COPY --from=deps /repo/packages ./packages
-COPY --from=deps /repo/apps/server/node_modules ./apps/server/node_modules
+RUN pnpm add -g turbo
 COPY . .
-RUN pnpm --filter=server build
+RUN turbo prune server --docker
 
-# --- Runtime ---
-FROM node:22-alpine AS runtime
+# --- Install + build that pruned subset, in isolation ---
+FROM base AS installer
+WORKDIR /repo
+COPY --from=pruner /repo/out/json/ .
+RUN pnpm install --frozen-lockfile
+COPY --from=pruner /repo/out/full/ .
+RUN pnpm exec turbo run build --filter=server...
+
+# --- Runtime: copy the whole built+installed tree as one coherent unit ---
+FROM base AS runner
+WORKDIR /repo
 ENV NODE_ENV=production
-WORKDIR /app
-COPY --from=build /repo/apps/server/dist ./dist
-COPY --from=build /repo/apps/server/node_modules ./node_modules
-COPY --from=build /repo/apps/server/package.json ./package.json
+USER node
+COPY --from=installer --chown=node:node /repo .
 EXPOSE 4000
-CMD ["node", "dist/index.js"]
+CMD ["node", "apps/server/dist/index.js"]
