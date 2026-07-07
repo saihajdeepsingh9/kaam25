@@ -6,7 +6,7 @@ import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
 
 export async function buildApp() {
-  const app = Fastify({ logger: loggerConfig });
+  const app = Fastify({ logger: loggerConfig, trustProxy: true });
 
   await registerCors(app);
   registerErrorHandler(app);

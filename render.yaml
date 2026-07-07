@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: kaam25-api
+    runtime: docker
+    dockerfilePath: ./apps/server/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      - key: BETTER_AUTH_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
