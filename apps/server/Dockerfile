@@ -7,7 +7,7 @@ RUN corepack enable
 # --- Prune: extract a minimal, self-contained subset for just `server` ---
 FROM base AS pruner
 WORKDIR /repo
-RUN pnpm add -g turbo
+RUN npm install -g turbo
 COPY . .
 RUN turbo prune server --docker
 
