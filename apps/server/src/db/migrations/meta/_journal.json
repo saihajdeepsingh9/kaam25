@@ -8,6 +8,13 @@
       "when": 1783397504414,
       "tag": "0000_broad_squadron_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783544739664,
+      "tag": "0001_chemical_terrax",
+      "breakpoints": true
     }
   ]
 }

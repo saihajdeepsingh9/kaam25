@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { bearer } from 'better-auth/plugins';
+import { bearer, organization } from 'better-auth/plugins';
+import { eq } from 'drizzle-orm';
 import { db } from './db.js';
 import { env, corsOrigins } from '../config/env.js';
 import * as schema from '../db/schema/index.js';
@@ -22,6 +23,32 @@ export const auth = betterAuth({
     // this is the actual security boundary; the client-side `minLength` on
     // the Input is just a UX hint and enforces nothing by itself.
     minPasswordLength: 8,
+  },
+
+  // Every new session gets the user's workspace auto-selected, so the web
+  // app doesn't need to manually call setActiveOrganization after sign-in.
+  // This is a plain read query — deliberately NOT using the
+  // auth.api.createOrganization-inside-user.create.after pattern, which has
+  // several open reliability issues (race conditions, permission checks
+  // failing) in Better Auth's own issue tracker as of early 2026. Brand new
+  // users with zero workspaces get `activeOrganizationId: null` here, which
+  // is exactly the signal the web app uses to route them to onboarding.
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          const [membership] = await db
+            .select({ organizationId: schema.member.organizationId })
+            .from(schema.member)
+            .where(eq(schema.member.userId, session.userId))
+            .limit(1);
+
+          return {
+            data: { ...session, activeOrganizationId: membership?.organizationId ?? null },
+          };
+        },
+      },
+    },
   },
 
   // Better Auth's built-in rate limiter is enabled by default in production
@@ -56,5 +83,11 @@ export const auth = betterAuth({
   // what lets auth work reliably across the Vercel/Render origin split
   // (third-party-cookie blocking in some browsers would otherwise make
   // cookie-only auth flaky) and is what the desktop app will use later too.
-  plugins: [bearer()],
+  plugins: [
+    bearer(),
+    // Default roles (owner/admin/member) and default limits are fine for
+    // v1 — no custom access control or teams yet, both easy to add later
+    // without a schema change.
+    organization(),
+  ],
 });

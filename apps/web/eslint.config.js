@@ -12,6 +12,6 @@ const __dirname = dirname(__filename);
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
 export default [
-  { ignores: ['next-env.d.ts'] },
+  { ignores: ['next-env.d.ts', '.next/**'] },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
 ];

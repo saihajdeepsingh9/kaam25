@@ -1,11 +1,13 @@
 'use client';
 
 import { createAuthClient } from 'better-auth/react';
+import { organizationClient } from 'better-auth/client/plugins';
 
 const TOKEN_KEY = 'kaam25_auth_token';
 
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
+  plugins: [organizationClient()],
   fetchOptions: {
     // Capture the bearer token Better Auth issues on sign-in/sign-up.
     onSuccess: (ctx) => {
@@ -24,4 +26,4 @@ export function clearStoredAuthToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-export const { useSession, signIn, signUp, signOut } = authClient;
+export const { useSession, useActiveOrganization, signIn, signUp, signOut } = authClient;

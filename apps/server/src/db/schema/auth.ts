@@ -31,6 +31,10 @@ export const session = pgTable('session', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
+  // Required by the `organization` plugin — which workspace this session is
+  // currently "in". No FK constraint by design, matching Better Auth's own
+  // default schema for this field.
+  activeOrganizationId: text('active_organization_id'),
 });
 
 export const account = pgTable('account', {

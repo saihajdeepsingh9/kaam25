@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@kaam25/ui';
-import { useSession, signOut, clearStoredAuthToken } from '@/lib/auth-client';
+import { useSession, useActiveOrganization, signOut, clearStoredAuthToken } from '@/lib/auth-client';
 
 export function Navbar() {
   const { data: session } = useSession();
+  const { data: activeOrganization } = useActiveOrganization();
   const router = useRouter();
 
   async function handleSignOut() {
@@ -27,6 +28,11 @@ export function Navbar() {
               <Link href="/dashboard" className="text-[var(--muted-foreground)] hover:text-current">
                 Dashboard
               </Link>
+              {activeOrganization && (
+                <span className="rounded-md bg-[var(--muted)] px-2 py-1 text-xs font-medium">
+                  {activeOrganization.name}
+                </span>
+              )}
               <span className="text-[var(--muted-foreground)]">{session.user.email}</span>
               <button onClick={handleSignOut} className="hover:text-current">
                 Sign out
