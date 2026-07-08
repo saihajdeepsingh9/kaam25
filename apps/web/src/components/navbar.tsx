@@ -1,19 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@kaam25/ui';
 import { useSession, useActiveOrganization, signOut, clearStoredAuthToken } from '@/lib/auth-client';
 
 export function Navbar() {
   const { data: session } = useSession();
   const { data: activeOrganization } = useActiveOrganization();
-  const router = useRouter();
 
   async function handleSignOut() {
     await signOut();
     clearStoredAuthToken();
-    router.push('/');
+    // See sign-in page for why this is a full reload, not router.push.
+    window.location.href = '/';
   }
 
   return (

@@ -1,13 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Input } from '@kaam25/ui';
 import { authClient } from '@/lib/auth-client';
 
 export default function SignInPage() {
-  const router = useRouter();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
@@ -18,14 +16,23 @@ export default function SignInPage() {
     setError(null);
     setIsSubmitting(true);
 
-    const { error: signInError } = await authClient.signIn.email({ email, password });
-
-    setIsSubmitting(false);
-    if (signInError) {
-      setError(signInError.message ?? 'Invalid email or password.');
-      return;
+    try {
+      const { error: signInError } = await authClient.signIn.email({ email, password });
+      if (signInError) {
+        setError(signInError.message ?? 'Invalid email or password.');
+        return;
+      }
+      // Full reload rather than router.push — Better Auth's client-side
+      // session/organization hooks don't reliably refetch after a client-side
+      // navigation following sign-in, leaving stale "no workspace" state.
+      // A real reload guarantees a clean slate.
+      window.location.href = '/dashboard';
+    } catch (err) {
+      console.error('Sign-in request failed:', err);
+      setError('Could not reach the server. Please try again in a moment.');
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push('/dashboard');
   }
 
   return (

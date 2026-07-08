@@ -1,13 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Input } from '@kaam25/ui';
 import { authClient } from '@/lib/auth-client';
 
 export default function SignUpPage() {
-  const router = useRouter();
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -19,14 +17,20 @@ export default function SignUpPage() {
     setError(null);
     setIsSubmitting(true);
 
-    const { error: signUpError } = await authClient.signUp.email({ name, email, password });
-
-    setIsSubmitting(false);
-    if (signUpError) {
-      setError(signUpError.message ?? 'Something went wrong. Please try again.');
-      return;
+    try {
+      const { error: signUpError } = await authClient.signUp.email({ name, email, password });
+      if (signUpError) {
+        setError(signUpError.message ?? 'Something went wrong. Please try again.');
+        return;
+      }
+      // See sign-in page for why this is a full reload, not router.push.
+      window.location.href = '/dashboard';
+    } catch (err) {
+      console.error('Sign-up request failed:', err);
+      setError('Could not reach the server. Please try again in a moment.');
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push('/dashboard');
   }
 
   return (

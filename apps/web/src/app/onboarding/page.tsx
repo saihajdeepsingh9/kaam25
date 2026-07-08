@@ -1,14 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import { Button, Input } from '@kaam25/ui';
 import { generateSlug } from '@kaam25/utils';
 import { authClient } from '@/lib/auth-client';
 import { RequireAuth } from '@/components/require-auth';
 
 function CreateWorkspaceForm() {
-  const router = useRouter();
   const [name, setName] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -27,7 +25,8 @@ function CreateWorkspaceForm() {
         setError(createError.message ?? 'Could not create your workspace. Please try again.');
         return;
       }
-      router.push('/dashboard');
+      // See sign-in page for why this is a full reload, not router.push.
+      window.location.href = '/dashboard';
     } catch (err) {
       console.error('Workspace creation failed:', err);
       setError('Could not reach the server. Please try again in a moment.');
