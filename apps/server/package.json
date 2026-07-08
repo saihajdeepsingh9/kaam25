@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
+    "@fastify/helmet": "^12.0.1",
     "@kaam25/shared": "workspace:*",
     "@kaam25/types": "workspace:*",
     "better-auth": "^1.4.1",
