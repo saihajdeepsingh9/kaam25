@@ -6,6 +6,7 @@ import { registerErrorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
 import { projectRoutes } from './routes/projects.js';
+import { taskRoutes } from './routes/tasks.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: loggerConfig, trustProxy: true });
@@ -17,6 +18,7 @@ export async function buildApp() {
   await app.register(healthRoutes);
   await app.register(authRoutes);
   await app.register(projectRoutes);
+  await app.register(taskRoutes);
 
   return app;
 }

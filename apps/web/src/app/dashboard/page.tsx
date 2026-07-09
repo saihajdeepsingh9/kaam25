@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { Button, Input } from '@kaam25/ui';
 import type { Project } from '@kaam25/types';
 import { useSession, useActiveOrganization } from '@/lib/auth-client';
@@ -102,7 +103,9 @@ function ProjectsSection({ workspaceId }: { workspaceId: string }) {
               key={p.id}
               className="flex items-center justify-between rounded-md border border-[var(--border)] px-4 py-3"
             >
-              <span className="font-medium">{p.name}</span>
+              <Link href={`/dashboard/projects/${p.id}`} className="font-medium hover:underline">
+                {p.name}
+              </Link>
               <button
                 onClick={() => handleDelete(p.id)}
                 className="text-sm text-[var(--muted-foreground)] hover:text-red-500"

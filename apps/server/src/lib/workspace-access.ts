@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { auth } from './auth.js';
 import { db } from './db.js';
-import { member } from '../db/schema/index.js';
+import { member, project } from '../db/schema/index.js';
 
 /**
  * Verifies the request has a valid session AND that the user is a member
@@ -39,4 +39,30 @@ export async function requireWorkspaceMember(
   }
 
   return { userId: session.user.id };
+}
+
+/**
+ * Confirms a project both exists and belongs to the given workspace. Call
+ * this after requireWorkspaceMember in any route nested under
+ * :workspaceId/projects/:projectId/... — without it, a member of Workspace A
+ * could pass Workspace A's ID (passing the membership check) but supply a
+ * projectId belonging to Workspace B and operate on it anyway.
+ */
+export async function requireProjectInWorkspace(
+  reply: FastifyReply,
+  workspaceId: string,
+  projectId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: project.id })
+    .from(project)
+    .where(and(eq(project.id, projectId), eq(project.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!row) {
+    reply.status(404).send({ success: false, error: { message: 'Project not found' } });
+    return false;
+  }
+
+  return true;
 }

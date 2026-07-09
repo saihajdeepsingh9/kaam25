@@ -26,3 +26,17 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
 }
+
+export type TaskStatus = 'todo' | 'in_progress' | 'done';
+
+/** A task, scoped to a single project. Dates are ISO strings — see Project. */
+export interface Task {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -79,6 +79,36 @@ export async function projectRoutes(app: FastifyInstance) {
     },
   );
 
+  app.get<{ Params: ProjectParams }>(
+    '/api/workspaces/:workspaceId/projects/:projectId',
+    async (request, reply) => {
+      const access = await requireWorkspaceMember(request, reply, request.params.workspaceId);
+      if (!access) return;
+
+      const [found] = await db
+        .select()
+        .from(project)
+        .where(
+          and(
+            eq(project.id, request.params.projectId),
+            eq(project.workspaceId, request.params.workspaceId),
+          ),
+        )
+        .limit(1);
+
+      if (!found) {
+        const body: ApiResponse<never> = {
+          success: false,
+          error: { message: 'Project not found' },
+        };
+        return reply.status(404).send(body);
+      }
+
+      const body: ApiResponse<Project> = { success: true, data: toProjectDto(found) };
+      return reply.send(body);
+    },
+  );
+
   app.delete<{ Params: ProjectParams }>(
     '/api/workspaces/:workspaceId/projects/:projectId',
     async (request, reply) => {
