@@ -14,3 +14,15 @@ export interface HealthStatus {
   uptimeSeconds: number;
   timestamp: string;
 }
+
+/** A project, scoped to a single workspace. Dates are ISO strings — this is
+ * the shape after JSON serialization, not the raw DB row. */
+export interface Project {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}

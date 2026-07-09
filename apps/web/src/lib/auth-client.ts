@@ -26,4 +26,8 @@ export function clearStoredAuthToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+export function getStoredAuthToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
 export const { useSession, useActiveOrganization, signIn, signUp, signOut } = authClient;

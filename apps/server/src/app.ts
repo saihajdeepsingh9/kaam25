@@ -5,6 +5,7 @@ import { registerHelmet } from './plugins/helmet.js';
 import { registerErrorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health.js';
 import { authRoutes } from './routes/auth.js';
+import { projectRoutes } from './routes/projects.js';
 
 export async function buildApp() {
   const app = Fastify({ logger: loggerConfig, trustProxy: true });
@@ -15,6 +16,7 @@ export async function buildApp() {
 
   await app.register(healthRoutes);
   await app.register(authRoutes);
+  await app.register(projectRoutes);
 
   return app;
 }
