@@ -170,7 +170,7 @@ function ProjectDetailContent({ projectId }: { projectId: string }) {
   if (!activeOrganization) return null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
       <div>
         <Link href="/dashboard" className="text-sm text-[var(--muted-foreground)] hover:text-current">
           ← Back to workspace

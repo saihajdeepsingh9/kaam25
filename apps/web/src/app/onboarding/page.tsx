@@ -36,7 +36,7 @@ function CreateWorkspaceForm() {
   }
 
   return (
-    <div className="mx-auto flex max-w-sm flex-col gap-6">
+    <div className="mx-auto flex max-w-sm flex-col gap-6 px-4 py-16">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Create your workspace</h1>
         <p className="mt-1 text-sm text-[var(--muted-foreground)]">
