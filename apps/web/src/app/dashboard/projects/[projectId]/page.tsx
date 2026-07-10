@@ -3,18 +3,12 @@
 import * as React from 'react';
 import { use } from 'react';
 import Link from 'next/link';
-import { Button, Input } from '@kaam25/ui';
+import { Button, Input, StatusSelect } from '@kaam25/ui';
 import type { Project, Task, TaskStatus } from '@kaam25/types';
 import { useActiveOrganization } from '@/lib/auth-client';
 import { apiFetch } from '@/lib/api-client';
 import { RequireAuth } from '@/components/require-auth';
 import { RequireWorkspace } from '@/components/require-workspace';
-
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: 'To do',
-  in_progress: 'In progress',
-  done: 'Done',
-};
 
 function TasksSection({ workspaceId, projectId }: { workspaceId: string; projectId: string }) {
   const [tasks, setTasks] = React.useState<Task[] | null>(null);
@@ -124,18 +118,11 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
             >
               <span className="font-medium">{t.title}</span>
               <div className="flex items-center gap-3">
-                <select
+                <StatusSelect
                   value={t.status}
-                  onChange={(e) => handleStatusChange(t.id, e.target.value as TaskStatus)}
-                  className="h-8 rounded-md border border-[var(--border)] bg-transparent px-2 text-sm"
-                  aria-label={`Status for ${t.title}`}
-                >
-                  {(Object.keys(STATUS_LABELS) as TaskStatus[]).map((status) => (
-                    <option key={status} value={status}>
-                      {STATUS_LABELS[status]}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(status) => handleStatusChange(t.id, status)}
+                  ariaLabel={`Status for ${t.title}`}
+                />
                 <button
                   onClick={() => handleDelete(t.id)}
                   className="text-sm text-[var(--muted-foreground)] hover:text-red-500"
@@ -175,7 +162,7 @@ function ProjectDetailContent({ projectId }: { projectId: string }) {
         <Link href="/dashboard" className="text-sm text-[var(--muted-foreground)] hover:text-current">
           ← Back to workspace
         </Link>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+        <h1 className="font-display mt-1 text-2xl font-semibold tracking-tight">
           {error ? 'Project' : (project?.name ?? 'Loading…')}
         </h1>
         {error && <p className="text-sm text-red-500">{error}</p>}

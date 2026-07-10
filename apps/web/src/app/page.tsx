@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { StatusStamp } from '@kaam25/ui';
 
 type SampleStatus = 'todo' | 'in_progress' | 'done';
 
@@ -8,24 +9,6 @@ const SAMPLE_TASKS: { title: string; status: SampleStatus }[] = [
   { title: 'Set up new hire onboarding', status: 'in_progress' },
   { title: 'Plan the team offsite', status: 'todo' },
 ];
-
-const STATUS_CONFIG: Record<SampleStatus, { label: string; color: string; rotate: string }> = {
-  todo: { label: 'To do', color: 'var(--color-status-todo)', rotate: '-1.2deg' },
-  in_progress: { label: 'In progress', color: 'var(--color-status-progress)', rotate: '1deg' },
-  done: { label: 'Done', color: 'var(--color-status-done)', rotate: '-0.8deg' },
-};
-
-function StatusStamp({ status }: { status: SampleStatus }) {
-  const config = STATUS_CONFIG[status];
-  return (
-    <span
-      className="inline-block shrink-0 rounded-sm border px-2 py-0.5 font-mono text-[10px] font-medium tracking-wider uppercase"
-      style={{ borderColor: config.color, color: config.color, transform: `rotate(${config.rotate})` }}
-    >
-      {config.label}
-    </span>
-  );
-}
 
 export default function HomePage() {
   return (

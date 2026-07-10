@@ -128,7 +128,7 @@ function DashboardContent() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{activeOrganization?.name}</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">{activeOrganization?.name}</h1>
         <p className="text-[var(--muted-foreground)]">Signed in as {session?.user.email}</p>
       </div>
       {activeOrganization && <ProjectsSection workspaceId={activeOrganization.id} />}

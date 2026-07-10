@@ -231,6 +231,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@kaam25/types':
+        specifier: workspace:*
+        version: link:../types
       '@kaam25/utils':
         specifier: workspace:*
         version: link:../utils
