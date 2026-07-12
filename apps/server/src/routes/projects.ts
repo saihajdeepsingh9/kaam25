@@ -12,6 +12,11 @@ const createProjectSchema = z.object({
   description: z.string().trim().max(2000).optional(),
 });
 
+const updateProjectSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(200).optional(),
+  description: z.string().trim().max(2000).nullable().optional(),
+});
+
 interface WorkspaceParams {
   workspaceId: string;
 }
@@ -105,6 +110,45 @@ export async function projectRoutes(app: FastifyInstance) {
       }
 
       const body: ApiResponse<Project> = { success: true, data: toProjectDto(found) };
+      return reply.send(body);
+    },
+  );
+
+  app.patch<{ Params: ProjectParams }>(
+    '/api/workspaces/:workspaceId/projects/:projectId',
+    async (request, reply) => {
+      const access = await requireWorkspaceMember(request, reply, request.params.workspaceId);
+      if (!access) return;
+
+      const parsed = updateProjectSchema.safeParse(request.body);
+      if (!parsed.success) {
+        const body: ApiResponse<never> = {
+          success: false,
+          error: { message: parsed.error.errors[0]?.message ?? 'Invalid request' },
+        };
+        return reply.status(400).send(body);
+      }
+
+      const [updated] = await db
+        .update(project)
+        .set({ ...parsed.data, updatedAt: new Date() })
+        .where(
+          and(
+            eq(project.id, request.params.projectId),
+            eq(project.workspaceId, request.params.workspaceId),
+          ),
+        )
+        .returning();
+
+      if (!updated) {
+        const body: ApiResponse<never> = {
+          success: false,
+          error: { message: 'Project not found' },
+        };
+        return reply.status(404).send(body);
+      }
+
+      const body: ApiResponse<Project> = { success: true, data: toProjectDto(updated) };
       return reply.send(body);
     },
   );

@@ -147,6 +147,12 @@ function ProjectDetailContent({ projectId }: { projectId: string }) {
   const [project, setProject] = React.useState<Project | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editName, setEditName] = React.useState('');
+  const [editDescription, setEditDescription] = React.useState('');
+  const [editError, setEditError] = React.useState<string | null>(null);
+  const [isSaving, setIsSaving] = React.useState(false);
+
   React.useEffect(() => {
     if (!activeOrganization) return;
     apiFetch<Project>(`/api/workspaces/${activeOrganization.id}/projects/${projectId}`)
@@ -157,6 +163,37 @@ function ProjectDetailContent({ projectId }: { projectId: string }) {
       });
   }, [activeOrganization, projectId]);
 
+  function startEditing() {
+    if (!project) return;
+    setEditName(project.name);
+    setEditDescription(project.description ?? '');
+    setEditError(null);
+    setIsEditing(true);
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!activeOrganization) return;
+    setEditError(null);
+    setIsSaving(true);
+    try {
+      const updated = await apiFetch<Project>(
+        `/api/workspaces/${activeOrganization.id}/projects/${projectId}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ name: editName, description: editDescription || null }),
+        },
+      );
+      setProject(updated);
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Failed to update project:', err);
+      setEditError(err instanceof Error ? err.message : 'Could not save changes.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   if (!activeOrganization) return null;
 
   return (
@@ -165,9 +202,63 @@ function ProjectDetailContent({ projectId }: { projectId: string }) {
         <Link href="/dashboard" className="text-sm text-[var(--muted-foreground)] hover:text-current">
           ← Back to workspace
         </Link>
-        <h1 className="font-display mt-1 text-2xl font-semibold tracking-tight">
-          {error ? 'Project' : (project?.name ?? 'Loading…')}
-        </h1>
+
+        {isEditing ? (
+          <form onSubmit={handleSave} className="mt-2 flex flex-col gap-3">
+            <Input
+              label="Project name"
+              name="name"
+              required
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+            />
+            <Input
+              label="Description"
+              name="description"
+              placeholder="Optional"
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+            />
+            {editError && (
+              <p role="alert" className="text-sm text-red-500">
+                {editError}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" disabled={isSaving}>
+                {isSaving ? 'Saving…' : 'Save'}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsEditing(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-1 flex items-start justify-between gap-3">
+            <div>
+              <h1 className="font-display text-2xl font-semibold tracking-tight">
+                {error ? 'Project' : (project?.name ?? 'Loading…')}
+              </h1>
+              {project?.description && (
+                <p className="mt-1 text-sm text-[var(--muted-foreground)]">{project.description}</p>
+              )}
+            </div>
+            {project && (
+              <button
+                onClick={startEditing}
+                className="shrink-0 text-sm text-[var(--muted-foreground)] hover:text-current"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+        )}
         {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
       <TasksSection workspaceId={activeOrganization.id} projectId={projectId} />
