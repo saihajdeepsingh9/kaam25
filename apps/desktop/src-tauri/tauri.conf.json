@@ -12,9 +12,10 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Kaam 25",
-        "width": 380,
-        "height": 480,
+        "width": 400,
+        "height": 600,
         "resizable": true,
         "center": true
       }

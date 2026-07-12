@@ -40,3 +40,10 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
 }
+
+/** A task with its project name attached — used by the flattened,
+ * cross-project view (the desktop widget's whole reason for existing:
+ * "what do I need to do," not "which project has which tasks"). */
+export interface TaskWithProject extends Task {
+  projectName: string;
+}

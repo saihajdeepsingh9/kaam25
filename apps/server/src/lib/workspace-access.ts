@@ -42,27 +42,44 @@ export async function requireWorkspaceMember(
 }
 
 /**
- * Confirms a project both exists and belongs to the given workspace. Call
- * this after requireWorkspaceMember in any route nested under
- * :workspaceId/projects/:projectId/... — without it, a member of Workspace A
- * could pass Workspace A's ID (passing the membership check) but supply a
- * projectId belonging to Workspace B and operate on it anyway.
+ * Combined check for routes nested under both :workspaceId and :projectId
+ * (all task routes) — verifies session, workspace membership, and that the
+ * project belongs to that workspace in a single query instead of two
+ * sequential ones (requireWorkspaceMember + requireProjectInWorkspace).
+ * Cuts a full database round-trip off every task create/update/delete/list
+ * request — the ones a widget hits most frequently.
  */
-export async function requireProjectInWorkspace(
+export async function requireProjectAccess(
+  request: FastifyRequest,
   reply: FastifyReply,
   workspaceId: string,
   projectId: string,
-): Promise<boolean> {
+): Promise<{ userId: string } | null> {
+  const session = await auth.api.getSession({ headers: fromNodeHeaders(request.headers) });
+  if (!session) {
+    reply.status(401).send({ success: false, error: { message: 'Authentication required' } });
+    return null;
+  }
+
   const [row] = await db
-    .select({ id: project.id })
+    .select({ projectId: project.id })
     .from(project)
-    .where(and(eq(project.id, projectId), eq(project.workspaceId, workspaceId)))
+    .innerJoin(member, eq(member.organizationId, project.workspaceId))
+    .where(
+      and(
+        eq(project.id, projectId),
+        eq(project.workspaceId, workspaceId),
+        eq(member.userId, session.user.id),
+      ),
+    )
     .limit(1);
 
   if (!row) {
-    reply.status(404).send({ success: false, error: { message: 'Project not found' } });
-    return false;
+    reply
+      .status(403)
+      .send({ success: false, error: { message: 'Not authorized for this project' } });
+    return null;
   }
 
-  return true;
+  return { userId: session.user.id };
 }

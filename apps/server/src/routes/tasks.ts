@@ -2,10 +2,10 @@ import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import type { ApiResponse, Task } from '@kaam25/types';
+import type { ApiResponse, Task, TaskWithProject } from '@kaam25/types';
 import { db } from '../lib/db.js';
-import { task } from '../db/schema/index.js';
-import { requireWorkspaceMember, requireProjectInWorkspace } from '../lib/workspace-access.js';
+import { task, project } from '../db/schema/index.js';
+import { requireWorkspaceMember, requireProjectAccess } from '../lib/workspace-access.js';
 
 const TASK_STATUSES = ['todo', 'in_progress', 'done'] as const;
 
@@ -20,8 +20,10 @@ const updateTaskSchema = z.object({
   status: z.enum(TASK_STATUSES).optional(),
 });
 
-interface ProjectParams {
+interface WorkspaceParams {
   workspaceId: string;
+}
+interface ProjectParams extends WorkspaceParams {
   projectId: string;
 }
 interface TaskParams extends ProjectParams {
@@ -37,17 +39,44 @@ function toTaskDto(row: typeof task.$inferSelect): Task {
 }
 
 export async function taskRoutes(app: FastifyInstance) {
-  app.get<{ Params: ProjectParams }>(
-    '/api/workspaces/:workspaceId/projects/:projectId/tasks',
+  // Flattened, cross-project view — every task in the workspace, with its
+  // project name attached. This is what the desktop widget shows: "what do
+  // I need to do," not "which project has which tasks." Only requires
+  // workspace membership, not a specific project — it deliberately spans
+  // all of them.
+  app.get<{ Params: WorkspaceParams }>(
+    '/api/workspaces/:workspaceId/tasks',
     async (request, reply) => {
       const access = await requireWorkspaceMember(request, reply, request.params.workspaceId);
       if (!access) return;
-      const validProject = await requireProjectInWorkspace(
+
+      const rows = await db
+        .select({ task, projectName: project.name })
+        .from(task)
+        .innerJoin(project, eq(task.projectId, project.id))
+        .where(eq(project.workspaceId, request.params.workspaceId));
+
+      const tasks: TaskWithProject[] = rows.map((row) => ({
+        ...toTaskDto(row.task),
+        projectName: row.projectName,
+      }));
+
+      const body: ApiResponse<TaskWithProject[]> = { success: true, data: tasks };
+      return reply.send(body);
+    },
+  );
+
+
+  app.get<{ Params: ProjectParams }>(
+    '/api/workspaces/:workspaceId/projects/:projectId/tasks',
+    async (request, reply) => {
+      const access = await requireProjectAccess(
+        request,
         reply,
         request.params.workspaceId,
         request.params.projectId,
       );
-      if (!validProject) return;
+      if (!access) return;
 
       const tasks = await db
         .select()
@@ -62,14 +91,13 @@ export async function taskRoutes(app: FastifyInstance) {
   app.post<{ Params: ProjectParams }>(
     '/api/workspaces/:workspaceId/projects/:projectId/tasks',
     async (request, reply) => {
-      const access = await requireWorkspaceMember(request, reply, request.params.workspaceId);
-      if (!access) return;
-      const validProject = await requireProjectInWorkspace(
+      const access = await requireProjectAccess(
+        request,
         reply,
         request.params.workspaceId,
         request.params.projectId,
       );
-      if (!validProject) return;
+      if (!access) return;
 
       const parsed = createTaskSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -99,14 +127,13 @@ export async function taskRoutes(app: FastifyInstance) {
   app.patch<{ Params: TaskParams }>(
     '/api/workspaces/:workspaceId/projects/:projectId/tasks/:taskId',
     async (request, reply) => {
-      const access = await requireWorkspaceMember(request, reply, request.params.workspaceId);
-      if (!access) return;
-      const validProject = await requireProjectInWorkspace(
+      const access = await requireProjectAccess(
+        request,
         reply,
         request.params.workspaceId,
         request.params.projectId,
       );
-      if (!validProject) return;
+      if (!access) return;
 
       const parsed = updateTaskSchema.safeParse(request.body);
       if (!parsed.success) {
@@ -138,14 +165,13 @@ export async function taskRoutes(app: FastifyInstance) {
   app.delete<{ Params: TaskParams }>(
     '/api/workspaces/:workspaceId/projects/:projectId/tasks/:taskId',
     async (request, reply) => {
-      const access = await requireWorkspaceMember(request, reply, request.params.workspaceId);
-      if (!access) return;
-      const validProject = await requireProjectInWorkspace(
+      const access = await requireProjectAccess(
+        request,
         reply,
         request.params.workspaceId,
         request.params.projectId,
       );
-      if (!validProject) return;
+      if (!access) return;
 
       await db
         .delete(task)
