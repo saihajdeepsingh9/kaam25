@@ -51,7 +51,12 @@ function ProjectsSection({ workspaceId }: { workspaceId: string }) {
     }
   }
 
-  async function handleDelete(projectId: string) {
+  async function handleDelete(projectId: string, projectName: string) {
+    const confirmed = window.confirm(
+      `Delete "${projectName}"? This also deletes every task inside it. This can't be undone.`,
+    );
+    if (!confirmed) return;
+
     try {
       await apiFetch(`/api/workspaces/${workspaceId}/projects/${projectId}`, {
         method: 'DELETE',
@@ -107,7 +112,7 @@ function ProjectsSection({ workspaceId }: { workspaceId: string }) {
                 {p.name}
               </Link>
               <button
-                onClick={() => handleDelete(p.id)}
+                onClick={() => handleDelete(p.id, p.name)}
                 className="text-sm text-[var(--muted-foreground)] hover:text-red-500"
                 aria-label={`Delete ${p.name}`}
               >

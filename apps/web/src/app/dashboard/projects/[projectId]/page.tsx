@@ -66,7 +66,10 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
     }
   }
 
-  async function handleDelete(taskId: string) {
+  async function handleDelete(taskId: string, taskTitle: string) {
+    const confirmed = window.confirm(`Delete "${taskTitle}"? This can't be undone.`);
+    if (!confirmed) return;
+
     try {
       await apiFetch(`${basePath}/${taskId}`, { method: 'DELETE' });
       await loadTasks();
@@ -124,7 +127,7 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
                   ariaLabel={`Status for ${t.title}`}
                 />
                 <button
-                  onClick={() => handleDelete(t.id)}
+                  onClick={() => handleDelete(t.id, t.title)}
                   className="text-sm text-[var(--muted-foreground)] hover:text-red-500"
                   aria-label={`Delete ${t.title}`}
                 >

@@ -41,7 +41,7 @@ function SignInForm() {
 
   return (
     <div className="flex h-screen flex-col items-center justify-center gap-4 px-6">
-      <h1 className="text-lg font-semibold tracking-tight">Sign in to Kaam 25</h1>
+      <h1 className="font-display text-lg font-semibold tracking-tight">Sign in to Kaam 25</h1>
       <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
         <Input
           label="Email"
@@ -231,7 +231,7 @@ function SignedInView() {
     <div className="flex h-screen flex-col">
       <header className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
         <div>
-          <h1 className="text-sm font-semibold tracking-tight">
+          <h1 className="font-display text-sm font-semibold tracking-tight">
             {activeOrganization?.name ?? 'Kaam 25'}
           </h1>
           <p className="text-xs text-[var(--muted-foreground)]">{session?.user.email}</p>
