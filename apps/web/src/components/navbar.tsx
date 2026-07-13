@@ -24,7 +24,7 @@ export function Navbar() {
         <nav className="flex items-center gap-5 text-sm">
           {session ? (
             <>
-              <Link href="/dashboard" className="text-[var(--muted-foreground)] hover:text-current">
+              <Link href="/dashboard" className="text-[var(--muted-foreground)] transition-colors hover:text-current">
                 Dashboard
               </Link>
               {activeOrganization && (
@@ -35,18 +35,18 @@ export function Navbar() {
               <span className="hidden text-[var(--muted-foreground)] sm:inline">
                 {session.user.email}
               </span>
-              <button onClick={handleSignOut} className="text-[var(--muted-foreground)] hover:text-current">
+              <button onClick={handleSignOut} className="text-[var(--muted-foreground)] transition-colors hover:text-current">
                 Sign out
               </button>
             </>
           ) : (
             <>
-              <Link href="/sign-in" className="text-[var(--muted-foreground)] hover:text-current">
+              <Link href="/sign-in" className="text-[var(--muted-foreground)] transition-colors hover:text-current">
                 Sign in
               </Link>
               <Link
                 href="/sign-up"
-                className="rounded-md bg-[var(--primary)] px-3 py-1.5 text-[var(--primary-foreground)] hover:opacity-90"
+                className="rounded-md bg-[var(--primary)] px-3 py-1.5 text-[var(--primary-foreground)] transition-opacity hover:opacity-90"
               >
                 Sign up
               </Link>

@@ -4,12 +4,18 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Button, Input } from '@kaam25/ui';
 import type { Project } from '@kaam25/types';
-import { useSession, useActiveOrganization } from '@/lib/auth-client';
+import { useActiveOrganization } from '@/lib/auth-client';
 import { apiFetch } from '@/lib/api-client';
 import { RequireAuth } from '@/components/require-auth';
 import { RequireWorkspace } from '@/components/require-workspace';
 
-function ProjectsSection({ workspaceId }: { workspaceId: string }) {
+function ProjectsSection({
+  workspaceId,
+  onCountChange,
+}: {
+  workspaceId: string;
+  onCountChange: (count: number) => void;
+}) {
   const [projects, setProjects] = React.useState<Project[] | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [name, setName] = React.useState('');
@@ -20,12 +26,13 @@ function ProjectsSection({ workspaceId }: { workspaceId: string }) {
     try {
       const data = await apiFetch<Project[]>(`/api/workspaces/${workspaceId}/projects`);
       setProjects(data);
+      onCountChange(data.length);
       setLoadError(null);
     } catch (err) {
       console.error('Failed to load projects:', err);
       setLoadError('Could not load projects.');
     }
-  }, [workspaceId]);
+  }, [workspaceId, onCountChange]);
 
   React.useEffect(() => {
     loadProjects();
@@ -106,14 +113,17 @@ function ProjectsSection({ workspaceId }: { workspaceId: string }) {
           {projects.map((p) => (
             <li
               key={p.id}
-              className="flex items-center justify-between rounded-md border border-[var(--border)] px-4 py-3"
+              className="flex items-center justify-between rounded-md border border-[var(--border)] px-4 py-3 transition-colors hover:bg-[var(--muted)]/40"
             >
-              <Link href={`/dashboard/projects/${p.id}`} className="font-medium hover:underline">
+              <Link
+                href={`/dashboard/projects/${p.id}`}
+                className="font-medium transition-colors hover:underline"
+              >
                 {p.name}
               </Link>
               <button
                 onClick={() => handleDelete(p.id, p.name)}
-                className="text-sm text-[var(--muted-foreground)] hover:text-red-500"
+                className="text-sm text-[var(--muted-foreground)] transition-colors hover:text-red-500"
                 aria-label={`Delete ${p.name}`}
               >
                 Delete
@@ -127,16 +137,24 @@ function ProjectsSection({ workspaceId }: { workspaceId: string }) {
 }
 
 function DashboardContent() {
-  const { data: session } = useSession();
   const { data: activeOrganization } = useActiveOrganization();
+  const [projectCount, setProjectCount] = React.useState<number | null>(null);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight">{activeOrganization?.name}</h1>
-        <p className="text-[var(--muted-foreground)]">Signed in as {session?.user.email}</p>
+        <h1 className="font-display text-2xl font-semibold tracking-tight">
+          {activeOrganization?.name}
+        </h1>
+        {projectCount !== null && (
+          <p className="text-sm text-[var(--muted-foreground)]">
+            {projectCount === 0 ? 'No projects yet' : `${projectCount} project${projectCount === 1 ? '' : 's'}`}
+          </p>
+        )}
       </div>
-      {activeOrganization && <ProjectsSection workspaceId={activeOrganization.id} />}
+      {activeOrganization && (
+        <ProjectsSection workspaceId={activeOrganization.id} onCountChange={setProjectCount} />
+      )}
     </div>
   );
 }

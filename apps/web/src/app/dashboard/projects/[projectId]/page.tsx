@@ -117,7 +117,7 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
           {tasks.map((t) => (
             <li
               key={t.id}
-              className="flex items-center justify-between rounded-md border border-[var(--border)] px-4 py-3"
+              className="flex items-center justify-between rounded-md border border-[var(--border)] px-4 py-3 transition-colors hover:bg-[var(--muted)]/40"
             >
               <span className="font-medium">{t.title}</span>
               <div className="flex items-center gap-3">
@@ -128,7 +128,7 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
                 />
                 <button
                   onClick={() => handleDelete(t.id, t.title)}
-                  className="text-sm text-[var(--muted-foreground)] hover:text-red-500"
+                  className="text-sm text-[var(--muted-foreground)] transition-colors hover:text-red-500"
                   aria-label={`Delete ${t.title}`}
                 >
                   Delete
@@ -199,7 +199,7 @@ function ProjectDetailContent({ projectId }: { projectId: string }) {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
       <div>
-        <Link href="/dashboard" className="text-sm text-[var(--muted-foreground)] hover:text-current">
+        <Link href="/dashboard" className="text-sm text-[var(--muted-foreground)] transition-colors hover:text-current">
           ← Back to workspace
         </Link>
 
@@ -252,7 +252,7 @@ function ProjectDetailContent({ projectId }: { projectId: string }) {
             {project && (
               <button
                 onClick={startEditing}
-                className="shrink-0 text-sm text-[var(--muted-foreground)] hover:text-current"
+                className="shrink-0 text-sm text-[var(--muted-foreground)] transition-colors hover:text-current"
               >
                 Edit
               </button>
