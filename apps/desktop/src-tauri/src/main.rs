@@ -2,37 +2,52 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{
-    menu::MenuBuilder,
+    menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, WindowEvent,
 };
+use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, None))
         .setup(|app| {
-            // Tray menu: Show (bring the window back) and Quit (the only
-            // way to actually exit, since closing the window now hides it
-            // instead -- see the close-interception below).
-            let show_item = tauri::menu::MenuItemBuilder::new("Show Kaam 25")
-                .id("show")
+            let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
+
+            let show_item = MenuItemBuilder::new("Show Kaam 25").id("show").build(app)?;
+            let autostart_item = CheckMenuItemBuilder::new("Start with Windows")
+                .id("autostart")
+                .checked(autostart_enabled)
                 .build(app)?;
-            let quit_item = tauri::menu::MenuItemBuilder::new("Quit")
-                .id("quit")
-                .build(app)?;
+            let quit_item = MenuItemBuilder::new("Quit").id("quit").build(app)?;
             let menu = MenuBuilder::new(app)
-                .items(&[&show_item, &quit_item])
+                .items(&[&show_item, &autostart_item, &quit_item])
                 .build()?;
 
             TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .tooltip("Kaam 25")
-                .on_menu_event(|app, event| match event.id().as_ref() {
+                .on_menu_event(move |app, event| match event.id().as_ref() {
                     "quit" => app.exit(0),
                     "show" => {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
+                        }
+                    }
+                    "autostart" => {
+                        // Toggle based on actual current state rather than the
+                        // menu item's checked state, so this stays correct
+                        // even if something external changed the registration.
+                        let manager = app.autolaunch();
+                        let is_enabled = manager.is_enabled().unwrap_or(false);
+                        if is_enabled {
+                            let _ = manager.disable();
+                            let _ = autostart_item.set_checked(false);
+                        } else {
+                            let _ = manager.enable();
+                            let _ = autostart_item.set_checked(true);
                         }
                     }
                     _ => {}
