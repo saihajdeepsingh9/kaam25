@@ -17,11 +17,11 @@ export function Navbar() {
 
   return (
     <header className="border-b border-[var(--border)]">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+      <div className="mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 max-w-5xl">
         <Link href="/" className="font-display text-lg font-semibold tracking-tight">
           Kaam 25
         </Link>
-        <nav className="flex items-center gap-5 text-sm">
+        <nav className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           {session ? (
             <>
               <Link href="/dashboard" className="text-[var(--muted-foreground)] transition-colors hover:text-current">

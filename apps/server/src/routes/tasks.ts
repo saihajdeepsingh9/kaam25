@@ -8,16 +8,27 @@ import { task, project } from '../db/schema/index.js';
 import { requireWorkspaceMember, requireProjectAccess } from '../lib/workspace-access.js';
 
 const TASK_STATUSES = ['todo', 'in_progress', 'done'] as const;
+const TASK_PRIORITIES = ['low', 'medium', 'high'] as const;
 
 const createTaskSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(200),
   description: z.string().trim().max(2000).optional(),
+  priority: z.enum(TASK_PRIORITIES).optional(),
+  // z.coerce.date() handles both a plain date ("2026-07-20", from a native
+  // <input type="date">) and a full ISO datetime. Optional here (no due
+  // date at all is valid) — quick-add should stay quick, not require this.
+  dueDate: z.coerce.date().optional(),
 });
 
 const updateTaskSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   description: z.string().trim().max(2000).nullable().optional(),
   status: z.enum(TASK_STATUSES).optional(),
+  priority: z.enum(TASK_PRIORITIES).optional(),
+  // .nullable() short-circuits on an explicit `null` before coercion runs,
+  // so clearing a due date (null) is distinct from omitting the field
+  // entirely (leave unchanged) — coerce.date() never sees the null.
+  dueDate: z.coerce.date().nullable().optional(),
 });
 
 interface WorkspaceParams {
@@ -33,6 +44,7 @@ interface TaskParams extends ProjectParams {
 function toTaskDto(row: typeof task.$inferSelect): Task {
   return {
     ...row,
+    dueDate: row.dueDate ? row.dueDate.toISOString() : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -115,6 +127,8 @@ export async function taskRoutes(app: FastifyInstance) {
           projectId: request.params.projectId,
           title: parsed.data.title,
           description: parsed.data.description ?? null,
+          priority: parsed.data.priority ?? 'medium',
+          dueDate: parsed.data.dueDate ?? null,
           createdBy: access.userId,
         })
         .returning();

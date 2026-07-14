@@ -192,24 +192,50 @@ function TaskWidget({ workspaceId }: { workspaceId: string }) {
         )}
         {tasks && tasks.length > 0 && (
           <ul className="flex flex-col gap-2">
-            {tasks.map((t) => (
-              <li
-                key={t.id}
-                className="flex flex-col gap-1 rounded-md border border-[var(--border)] p-2"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm">{t.title}</span>
-                  <StatusSelect
-                    value={t.status}
-                    onChange={(status) => handleStatusChange(t, status)}
-                    ariaLabel={`Status for ${t.title}`}
-                  />
-                </div>
-                <span className="font-mono text-[10px] tracking-wide text-[var(--muted-foreground)] uppercase">
-                  {t.projectName}
-                </span>
-              </li>
-            ))}
+            {tasks.map((t) => {
+              const overdue = t.dueDate ? new Date(t.dueDate) < new Date() && t.status !== 'done' : false;
+              return (
+                <li
+                  key={t.id}
+                  className="flex flex-col gap-1 rounded-md border border-[var(--border)] p-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm">{t.title}</span>
+                    <StatusSelect
+                      value={t.status}
+                      onChange={(status) => handleStatusChange(t, status)}
+                      ariaLabel={`Status for ${t.title}`}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span className="font-mono text-[10px] tracking-wide text-[var(--muted-foreground)] uppercase">
+                      {t.projectName}
+                    </span>
+                    {t.priority === 'high' && (
+                      <span
+                        className="font-mono text-[10px] tracking-wide uppercase"
+                        style={{ color: 'var(--color-marker-400)' }}
+                      >
+                        High
+                      </span>
+                    )}
+                    {t.dueDate && (
+                      <span
+                        className="text-[10px]"
+                        style={{
+                          color: overdue ? 'var(--color-marker-400)' : 'var(--muted-foreground)',
+                        }}
+                      >
+                        {new Date(t.dueDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

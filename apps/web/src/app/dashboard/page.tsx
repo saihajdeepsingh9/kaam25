@@ -77,7 +77,7 @@ function ProjectsSection({
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={handleCreate} className="flex items-end gap-3">
+      <form onSubmit={handleCreate} className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex-1">
           <Input
             label="New project"
@@ -113,7 +113,7 @@ function ProjectsSection({
           {projects.map((p) => (
             <li
               key={p.id}
-              className="flex items-center justify-between rounded-md border border-[var(--border)] px-4 py-3 transition-colors hover:bg-[var(--muted)]/40"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] px-4 py-3 transition-colors hover:bg-[var(--muted)]/40"
             >
               <Link
                 href={`/dashboard/projects/${p.id}`}

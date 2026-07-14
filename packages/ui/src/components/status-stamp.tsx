@@ -39,11 +39,15 @@ export function StatusSelect({
       value={value}
       onChange={(e) => onChange(e.target.value as TaskStatus)}
       aria-label={ariaLabel}
-      className="h-7 cursor-pointer rounded-sm border bg-transparent px-2 font-mono text-[10px] font-medium tracking-wider uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-      style={{ borderColor: config.color, color: config.color }}
+      className="h-7 cursor-pointer rounded-sm border px-2 font-mono text-[10px] font-medium tracking-wider uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      style={{ borderColor: config.color, color: config.color, backgroundColor: 'var(--background)' }}
     >
       {(Object.keys(STATUS_CONFIG) as TaskStatus[]).map((status) => (
-        <option key={status} value={status}>
+        <option
+          key={status}
+          value={status}
+          style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
+        >
           {STATUS_CONFIG[status].label}
         </option>
       ))}

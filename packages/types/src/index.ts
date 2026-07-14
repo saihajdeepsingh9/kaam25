@@ -28,14 +28,18 @@ export interface Project {
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high';
 
-/** A task, scoped to a single project. Dates are ISO strings — see Project. */
+/** A task, scoped to a single project. Dates are ISO strings — see Project.
+ * dueDate is nullable (optional at creation, stays optional forever). */
 export interface Task {
   id: string;
   projectId: string;
   title: string;
   description: string | null;
   status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
