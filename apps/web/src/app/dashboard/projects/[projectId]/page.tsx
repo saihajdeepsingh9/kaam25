@@ -25,6 +25,21 @@ function isOverdue(iso: string, status: TaskStatus): boolean {
   return status !== 'done' && new Date(iso) < new Date();
 }
 
+/** Matches the server's ORDER BY (priority desc, due date asc, nulls last)
+ * so optimistic local updates stay correctly positioned without a reload. */
+function sortTasks(tasks: Task[]): Task[] {
+  const priorityRank: Record<TaskPriority, number> = { high: 0, medium: 1, low: 2 };
+  return [...tasks].sort((a, b) => {
+    if (priorityRank[a.priority] !== priorityRank[b.priority]) {
+      return priorityRank[a.priority] - priorityRank[b.priority];
+    }
+    if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    return 0;
+  });
+}
+
 function TasksSection({ workspaceId, projectId }: { workspaceId: string; projectId: string }) {
   const [tasks, setTasks] = React.useState<Task[] | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
@@ -41,7 +56,7 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
   const loadTasks = React.useCallback(async () => {
     try {
       const data = await apiFetch<Task[]>(basePath);
-      setTasks(data);
+      setTasks(sortTasks(data));
       setLoadError(null);
     } catch (err) {
       console.error('Failed to load tasks:', err);
@@ -58,7 +73,7 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
     setCreateError(null);
     setIsCreating(true);
     try {
-      await apiFetch<Task>(basePath, {
+      const created = await apiFetch<Task>(basePath, {
         method: 'POST',
         body: JSON.stringify({
           title,
@@ -66,11 +81,11 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
           dueDate: dueDate || undefined,
         }),
       });
+      setTasks((current) => sortTasks([...(current ?? []), created]));
       setTitle('');
       setPriority('medium');
       setDueDate('');
       setShowDetails(false);
-      await loadTasks();
     } catch (err) {
       console.error('Failed to create task:', err);
       setCreateError(err instanceof Error ? err.message : 'Could not create task.');
@@ -79,44 +94,26 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
     }
   }
 
-  async function handleStatusChange(taskId: string, status: TaskStatus) {
+  async function patchTask(taskId: string, body: Record<string, unknown>) {
     try {
-      await apiFetch<Task>(`${basePath}/${taskId}`, {
+      const updated = await apiFetch<Task>(`${basePath}/${taskId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(body),
       });
-      await loadTasks();
+      setTasks((current) =>
+        sortTasks((current ?? []).map((t) => (t.id === updated.id ? updated : t))),
+      );
     } catch (err) {
       console.error('Failed to update task:', err);
       setLoadError('Could not update that task.');
     }
   }
 
-  async function handlePriorityChange(taskId: string, newPriority: TaskPriority) {
-    try {
-      await apiFetch<Task>(`${basePath}/${taskId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ priority: newPriority }),
-      });
-      await loadTasks();
-    } catch (err) {
-      console.error('Failed to update task:', err);
-      setLoadError('Could not update that task.');
-    }
-  }
-
-  async function handleDueDateChange(taskId: string, newDueDate: string) {
-    try {
-      await apiFetch<Task>(`${basePath}/${taskId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ dueDate: newDueDate || null }),
-      });
-      await loadTasks();
-    } catch (err) {
-      console.error('Failed to update task:', err);
-      setLoadError('Could not update that task.');
-    }
-  }
+  const handleStatusChange = (taskId: string, status: TaskStatus) => patchTask(taskId, { status });
+  const handlePriorityChange = (taskId: string, priority: TaskPriority) =>
+    patchTask(taskId, { priority });
+  const handleDueDateChange = (taskId: string, dueDate: string) =>
+    patchTask(taskId, { dueDate: dueDate || null });
 
   async function handleDelete(taskId: string, taskTitle: string) {
     const confirmed = window.confirm(`Delete "${taskTitle}"? This can't be undone.`);
@@ -124,7 +121,7 @@ function TasksSection({ workspaceId, projectId }: { workspaceId: string; project
 
     try {
       await apiFetch(`${basePath}/${taskId}`, { method: 'DELETE' });
-      await loadTasks();
+      setTasks((current) => (current ?? []).filter((t) => t.id !== taskId));
     } catch (err) {
       console.error('Failed to delete task:', err);
       setLoadError('Could not delete that task.');

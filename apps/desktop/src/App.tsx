@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Button, Input, StatusSelect, ThemeToggle } from '@kaam25/ui';
-import type { Project, Task, TaskStatus, TaskWithProject } from '@kaam25/types';
+import { Button, Input, StatusSelect, PrioritySelect, ThemeToggle } from '@kaam25/ui';
+import type { Project, Task, TaskStatus, TaskPriority, TaskWithProject } from '@kaam25/types';
 import {
   useSession,
   useActiveOrganization,
@@ -9,6 +9,21 @@ import {
   clearStoredAuthToken,
 } from './lib/auth-client';
 import { apiFetch } from './lib/api-client';
+
+/** Matches the server's ORDER BY (priority desc, due date asc, nulls last)
+ * so optimistic local updates stay correctly positioned without a reload. */
+function sortTasks<T extends { priority: TaskPriority; dueDate: string | null }>(tasks: T[]): T[] {
+  const priorityRank: Record<TaskPriority, number> = { high: 0, medium: 1, low: 2 };
+  return [...tasks].sort((a, b) => {
+    if (priorityRank[a.priority] !== priorityRank[b.priority]) {
+      return priorityRank[a.priority] - priorityRank[b.priority];
+    }
+    if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+    if (a.dueDate) return -1;
+    if (b.dueDate) return 1;
+    return 0;
+  });
+}
 
 function SignInForm() {
   const [email, setEmail] = React.useState('');
@@ -93,7 +108,7 @@ function TaskWidget({ workspaceId }: { workspaceId: string }) {
         apiFetch<TaskWithProject[]>(`/api/workspaces/${workspaceId}/tasks`),
         apiFetch<Project[]>(`/api/workspaces/${workspaceId}/projects`),
       ]);
-      setTasks(tasksData);
+      setTasks(sortTasks(tasksData));
       setProjects(projectsData);
       setLoadError(null);
       setProjectId((current) => current || (projectsData[0]?.id ?? ''));
@@ -125,7 +140,7 @@ function TaskWidget({ workspaceId }: { workspaceId: string }) {
       // already have locally. Cuts what used to be 2 extra full round-trips
       // (tasks + projects, each with their own auth checks) down to zero.
       const projectName = projects?.find((p) => p.id === projectId)?.name ?? '';
-      setTasks((current) => [...(current ?? []), { ...created, projectName }]);
+      setTasks((current) => sortTasks([...(current ?? []), { ...created, projectName }]));
       setTitle('');
     } catch (err) {
       console.error('Failed to create task:', err);
@@ -135,15 +150,17 @@ function TaskWidget({ workspaceId }: { workspaceId: string }) {
     }
   }
 
-  async function handleStatusChange(t: TaskWithProject, status: TaskStatus) {
+  async function patchTask(t: TaskWithProject, body: Record<string, unknown>) {
     try {
       const updated = await apiFetch<Task>(
         `/api/workspaces/${workspaceId}/projects/${t.projectId}/tasks/${t.id}`,
-        { method: 'PATCH', body: JSON.stringify({ status }) },
+        { method: 'PATCH', body: JSON.stringify(body) },
       );
       setTasks((current) =>
-        (current ?? []).map((task) =>
-          task.id === updated.id ? { ...updated, projectName: t.projectName } : task,
+        sortTasks(
+          (current ?? []).map((task) =>
+            task.id === updated.id ? { ...updated, projectName: t.projectName } : task,
+          ),
         ),
       );
     } catch (err) {
@@ -151,6 +168,13 @@ function TaskWidget({ workspaceId }: { workspaceId: string }) {
       setLoadError('Could not update that task.');
     }
   }
+
+  const handleStatusChange = (t: TaskWithProject, status: TaskStatus) =>
+    patchTask(t, { status });
+  const handlePriorityChange = (t: TaskWithProject, priority: TaskPriority) =>
+    patchTask(t, { priority });
+  const handleDueDateChange = (t: TaskWithProject, dueDate: string) =>
+    patchTask(t, { dueDate: dueDate || null });
 
   return (
     <div className="flex h-full flex-col gap-3 p-4">
@@ -197,41 +221,36 @@ function TaskWidget({ workspaceId }: { workspaceId: string }) {
               return (
                 <li
                   key={t.id}
-                  className="flex flex-col gap-1 rounded-md border border-[var(--border)] p-2"
+                  className="flex flex-col gap-1.5 rounded-md border border-[var(--border)] p-2"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm">{t.title}</span>
+                    <span className="font-mono text-[10px] tracking-wide text-[var(--muted-foreground)] uppercase">
+                      {t.projectName}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <StatusSelect
                       value={t.status}
                       onChange={(status) => handleStatusChange(t, status)}
                       ariaLabel={`Status for ${t.title}`}
                     />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className="font-mono text-[10px] tracking-wide text-[var(--muted-foreground)] uppercase">
-                      {t.projectName}
-                    </span>
-                    {t.priority === 'high' && (
-                      <span
-                        className="font-mono text-[10px] tracking-wide uppercase"
-                        style={{ color: 'var(--color-marker-400)' }}
-                      >
-                        High
-                      </span>
-                    )}
-                    {t.dueDate && (
-                      <span
-                        className="text-[10px]"
-                        style={{
-                          color: overdue ? 'var(--color-marker-400)' : 'var(--muted-foreground)',
-                        }}
-                      >
-                        {new Date(t.dueDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </span>
-                    )}
+                    <PrioritySelect
+                      value={t.priority}
+                      onChange={(priority) => handlePriorityChange(t, priority)}
+                      ariaLabel={`Priority for ${t.title}`}
+                    />
+                    <input
+                      type="date"
+                      value={t.dueDate ? t.dueDate.slice(0, 10) : ''}
+                      onChange={(e) => handleDueDateChange(t, e.target.value)}
+                      aria-label={`Due date for ${t.title}`}
+                      className="h-7 rounded-sm border border-[var(--border)] px-1.5 text-[10px]"
+                      style={{
+                        backgroundColor: 'var(--background)',
+                        color: overdue ? 'var(--color-marker-400)' : 'var(--foreground)',
+                      }}
+                    />
                   </div>
                 </li>
               );

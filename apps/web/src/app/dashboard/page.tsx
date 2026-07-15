@@ -44,12 +44,16 @@ function ProjectsSection({
     setIsCreating(true);
 
     try {
-      await apiFetch<Project>(`/api/workspaces/${workspaceId}/projects`, {
+      const created = await apiFetch<Project>(`/api/workspaces/${workspaceId}/projects`, {
         method: 'POST',
         body: JSON.stringify({ name }),
       });
+      setProjects((current) => {
+        const updated = [...(current ?? []), created];
+        onCountChange(updated.length);
+        return updated;
+      });
       setName('');
-      await loadProjects();
     } catch (err) {
       console.error('Failed to create project:', err);
       setCreateError(err instanceof Error ? err.message : 'Could not create project.');
@@ -68,7 +72,11 @@ function ProjectsSection({
       await apiFetch(`/api/workspaces/${workspaceId}/projects/${projectId}`, {
         method: 'DELETE',
       });
-      await loadProjects();
+      setProjects((current) => {
+        const updated = (current ?? []).filter((p) => p.id !== projectId);
+        onCountChange(updated.length);
+        return updated;
+      });
     } catch (err) {
       console.error('Failed to delete project:', err);
       setLoadError('Could not delete that project.');

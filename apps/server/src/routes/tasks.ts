@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, desc, asc } from 'drizzle-orm';
 import { z } from 'zod';
 import type { ApiResponse, Task, TaskWithProject } from '@kaam25/types';
 import { db } from '../lib/db.js';
@@ -66,7 +66,8 @@ export async function taskRoutes(app: FastifyInstance) {
         .select({ task, projectName: project.name })
         .from(task)
         .innerJoin(project, eq(task.projectId, project.id))
-        .where(eq(project.workspaceId, request.params.workspaceId));
+        .where(eq(project.workspaceId, request.params.workspaceId))
+        .orderBy(desc(task.priority), asc(task.dueDate));
 
       const tasks: TaskWithProject[] = rows.map((row) => ({
         ...toTaskDto(row.task),
@@ -93,7 +94,8 @@ export async function taskRoutes(app: FastifyInstance) {
       const tasks = await db
         .select()
         .from(task)
-        .where(eq(task.projectId, request.params.projectId));
+        .where(eq(task.projectId, request.params.projectId))
+        .orderBy(desc(task.priority), asc(task.dueDate));
 
       const body: ApiResponse<Task[]> = { success: true, data: tasks.map(toTaskDto) };
       return reply.send(body);
