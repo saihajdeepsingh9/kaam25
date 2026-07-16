@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import { StatusStamp } from '@kaam25/ui';
+import { useSession } from '@/lib/auth-client';
 
 type SampleStatus = 'todo' | 'in_progress' | 'done';
 
@@ -11,6 +14,8 @@ const SAMPLE_TASKS: { title: string; status: SampleStatus }[] = [
 ];
 
 export default function HomePage() {
+  const { data: session, isPending } = useSession();
+
   return (
     <div className="flex flex-col">
       <section className="mx-auto grid max-w-5xl gap-12 px-4 py-20 md:grid-cols-2 md:items-center md:py-28">
@@ -26,15 +31,29 @@ export default function HomePage() {
             one workspace, its projects, and every task in between.
           </p>
           <div className="flex items-center gap-4">
-            <Link
-              href="/sign-up"
-              className="rounded-md bg-[var(--primary)] px-5 py-2.5 text-sm font-medium text-[var(--primary-foreground)] hover:opacity-90"
-            >
-              Create your workspace
-            </Link>
-            <Link href="/sign-in" className="text-sm text-[var(--muted-foreground)] hover:text-current">
-              Sign in
-            </Link>
+            {!isPending && session ? (
+              <Link
+                href="/dashboard"
+                className="rounded-md bg-[var(--primary)] px-5 py-2.5 text-sm font-medium text-[var(--primary-foreground)] hover:opacity-90"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/sign-up"
+                  className="rounded-md bg-[var(--primary)] px-5 py-2.5 text-sm font-medium text-[var(--primary-foreground)] hover:opacity-90"
+                >
+                  Create your workspace
+                </Link>
+                <Link
+                  href="/sign-in"
+                  className="text-sm text-[var(--muted-foreground)] hover:text-current"
+                >
+                  Sign in
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

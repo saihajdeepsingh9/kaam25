@@ -4,8 +4,9 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Button, Input } from '@kaam25/ui';
 import { authClient } from '@/lib/auth-client';
+import { RedirectIfAuthed } from '@/components/redirect-if-authed';
 
-export default function SignInPage() {
+function SignInForm() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
@@ -75,5 +76,13 @@ export default function SignInPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <RedirectIfAuthed>
+      <SignInForm />
+    </RedirectIfAuthed>
   );
 }
